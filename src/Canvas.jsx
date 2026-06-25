@@ -1,0 +1,24 @@
+import { useRef, useEffect } from "react";
+
+/*Draws a square based on colorFunction, which takes two ints and returns an RGBA value.*/
+function Canvas({ width, height, colorFunction }) {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        const imageData = ctx.createImageData(width, height);
+        const pixels32 = new Uint32Array(imageData.data.buffer);      
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                pixels32[y * width + x] = colorFunction(x, y)
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }, [width, height, colorFunction]);
+
+    return <canvas ref={canvasRef} width={width} height={height} />;
+}
+
+export default Canvas
