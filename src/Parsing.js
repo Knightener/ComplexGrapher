@@ -1,4 +1,6 @@
-import * as math from "mathjs";
+
+import { create, all } from 'mathjs';
+const math = create(all);
 
 const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi"];
 
@@ -6,21 +8,21 @@ const SPECIAL_CHAR = '!'
 
 // Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
 export function parseLatex(latex) {
-latex = parseLatexParentheses(latex)
-  const varNames = getVariableNames(latex);
-  const right = latex.split("=")[1].trim();
-  
-  const mathJSExpression = parseLatexToMathJS(right);
-  const compiled = math.compile(mathJSExpression);
+    latex = parseLatexParentheses(latex)
+    const varNames = getVariableNames(latex);
+    const right = latex.split("=")[1].trim();
 
-  console.log(mathJSExpression)
-  return (...values) => {
-    const vars = {};
-    varNames.forEach((name, i) => {
-      vars[name] = values[i];
-    });
-    return compiled.evaluate(vars);
-  };
+    const mathJSExpression = parseLatexToMathJS(right);
+    const compiled = math.compile(mathJSExpression);
+
+    console.log(mathJSExpression)
+    return (...values) => {
+        const vars = {};
+        varNames.forEach((name, i) => {
+            vars[name] = values[i];
+        });
+        return compiled.evaluate(vars);
+    };
 }
 
 // Assumes parentheses already handled
@@ -28,12 +30,12 @@ function parseLatexToMathJS(latex) {
     let parsed = replaceFractions(latex)
 
     parsed = parsed
-    // Multiplications
-    .replaceAll("\\cdot", "*")
-    // Remaining slashes (e.g, functions, spaces)
-    .replaceAll("\\", "")
-    // Remaining spaces
-    .replaceAll(" ", "")
+        // Multiplications
+        .replaceAll("\\cdot", "*")
+        // Remaining slashes (e.g, functions, spaces)
+        .replaceAll("\\", "")
+        // Remaining spaces
+        .replaceAll(" ", "")
 
     return addMultiplications(parsed)
 }
@@ -88,7 +90,7 @@ function addMultiplications(string) {
     let active = true;
     for (let i = 0; i < string.length - 1; i++) {
         if (active) {
-            if (isAlphaNumerical(string[i]) && (isAlphaNumerical(string[i + 1]) || string[i + 1] === SPECIAL_CHAR )) {
+            if (isAlphaNumerical(string[i]) && (isAlphaNumerical(string[i + 1]) || string[i + 1] === SPECIAL_CHAR)) {
                 string = string.slice(0, i + 1) + '*' + string.slice(i + 1)
                 // Accounts for length change
                 i++
