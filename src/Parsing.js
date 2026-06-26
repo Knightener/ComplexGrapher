@@ -4,20 +4,42 @@ const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi"];
 
 const SPECIAL_CHAR = '!'
 
+// Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
 export function parseLatex(latex) {
+latex = parseLatexParentheses(latex)
+  const varNames = getVariableNames(latex);
+  const right = latex.split("=")[1].trim();
+  
+  const mathJSExpression = parseLatexToMathJS(right);
+  const compiled = math.compile(mathJSExpression);
+
+  console.log(mathJSExpression)
+  return (...values) => {
+    const vars = {};
+    varNames.forEach((name, i) => {
+      vars[name] = values[i];
+    });
+    return compiled.evaluate(vars);
+  };
+}
+
+// Assumes parentheses already handled
+function parseLatexToMathJS(latex) {
     let parsed = replaceFractions(latex)
 
     parsed = parsed
-    // Left parantheses
-    .replaceAll("\\left(", "(")
-    // Right parantheses
-    .replaceAll("\\right)", ")")
     // Multiplications
     .replaceAll("\\cdot", "*")
     // Remaining slashes (e.g, functions, spaces)
     .replaceAll("\\", "")
+    // Remaining spaces
+    .replaceAll(" ", "")
 
     return addMultiplications(parsed)
+}
+
+function parseLatexParentheses(latex) {
+    return latex.replaceAll("\\left(", "(").replaceAll("\\right)", ")")
 }
 
 // Replaces latex fractions with regular fractions (/frac{x}{y} -> x/y)
@@ -29,7 +51,7 @@ function replaceFractions(latex) {
         const openBrace2 = openBrace1 + numerator.length + 2;
         const denominator = extractBraceContent(latex, openBrace2);
         const full = latex.slice(fracIndex, openBrace2 + denominator.length + 2);
-        latex = latex.replace(full, `(${numerator})/(${denominator})`);
+        latex = latex.replace(full, `((${numerator})/(${denominator}))`);
     }
     return latex;
 }
@@ -81,4 +103,10 @@ function addMultiplications(string) {
 
 function isAlphaNumerical(character) {
     return /[a-zA-Z0-9]/.test(character);
+}
+
+// Returns the variable names of the latex expression (e.g. f(x,y) = x + y returns [x,y])
+function getVariableNames(latex) {
+    let varList = latex.slice(latex.indexOf("(") + 1, latex.indexOf(")"))
+    return varList.split(",")
 }

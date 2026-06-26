@@ -6,7 +6,7 @@ import { parseLatex } from './Parsing';
 
 function App() {
   function handleChange(latex) {
-    console.log(parseLatex(latex));
+    console.log(parseLatex(latex)(1,2));
   }
   return <Input onChange={handleChange} />;
 }
