@@ -8,21 +8,28 @@ const SPECIAL_CHAR = '!'
 
 // Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
 export function parseLatex(latex) {
-    latex = parseLatexParentheses(latex)
-    const varNames = getVariableNames(latex);
-    const right = latex.split("=")[1].trim();
+    if (latex.includes("^{ }")) {
+        return null
+    }
+    try {
+        latex = parseLatexParentheses(latex)
+        const varNames = getVariableNames(latex);
+        const right = latex.split("=")[1].trim();
 
-    const mathJSExpression = parseLatexToMathJS(right);
-    const compiled = math.compile(mathJSExpression);
+        const mathJSExpression = parseLatexToMathJS(right);
+        const compiled = math.compile(mathJSExpression);
 
-    console.log(mathJSExpression)
-    return (...values) => {
-        const vars = {};
-        varNames.forEach((name, i) => {
-            vars[name] = values[i];
-        });
-        return compiled.evaluate(vars);
-    };
+        console.log(mathJSExpression)
+        return (...values) => {
+            const vars = {};
+            varNames.forEach((name, i) => {
+                vars[name] = values[i];
+            });
+            return compiled.evaluate(vars);
+        };
+    } catch {
+        return null;
+    }
 }
 
 // Assumes parentheses already handled

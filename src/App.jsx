@@ -5,15 +5,26 @@ import Input from "./Input";
 import { parseLatex } from './Parsing';
 import * as math from "mathjs";
 
+const defaultF = (x, y) => x << y;
+
 function App() {
+  const [f, setF] = useState(() => defaultF);
+
   function handleChange(latex) {
-    console.log(parseLatex(latex)(math.complex(1,1), math.complex(1,-1)));
+    const fn = parseLatex(latex);
+    if (fn !== null) {
+      setF(() => fn);
+    } else {
+      console.log("invalid expression")
+    }
   }
+
   return (
     <>
-  <Input onChange={handleChange} />
-  </>
-);
+      <Input onChange={handleChange} />
+      <Canvas width={400} height={400} colorFunction={f} />
+    </>
+  );
 }
 
 export default App
