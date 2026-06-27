@@ -4,8 +4,9 @@ import './App.css'
 import Input from "./Input";
 import { parseLatex } from './Parsing';
 import * as math from "mathjs";
+import { complexColourNA } from './Color';
 
-const defaultF = (x, y) => x << y;
+const defaultF = z => z;
 
 function App() {
   const [f, setF] = useState(() => defaultF);
@@ -22,7 +23,7 @@ function App() {
   return (
     <>
       <Input onChange={handleChange} />
-      <Canvas width={400} height={400} colorFunction={f} />
+      <Canvas width={400} height={400} colorFunction={(x,y) => complexColourNA(f(math.complex(x-200,y-200)))} />
     </>
   );
 }

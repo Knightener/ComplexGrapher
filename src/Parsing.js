@@ -6,7 +6,8 @@ const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi"];
 
 const SPECIAL_CHAR = '!'
 
-// Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
+/* Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
+Invalid expression returns null.*/
 export function parseLatex(latex) {
     if (latex.includes("^{ }")) {
         return null
@@ -16,6 +17,11 @@ export function parseLatex(latex) {
         const varNames = getVariableNames(latex);
         const right = latex.split("=")[1].trim();
 
+        // empty function
+        if (right === "") {
+            return null;
+        }
+        
         const mathJSExpression = parseLatexToMathJS(right);
         const compiled = math.compile(mathJSExpression);
 
