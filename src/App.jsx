@@ -20,11 +20,20 @@ function App() {
     }
   }
 
+   let canvasWidth = Math.round(window.innerWidth * 0.8 * 0.25);
+   let canvasHeight = Math.round(window.innerHeight*0.25);
+
   return (
-    <>
-      <Input onChange={handleChange} />
-      <Canvas width={400} height={400} colorFunction={(x,y) => complexColourNA(f(math.complex(x-200,y-200)))} />
-    </>
+    <div style={{ display: "flex", height: "100vh" }}>
+      <div className="sidebar">
+        {/* sidebar */}
+        <Input onChange={handleChange} />
+      </div>
+      <div style={{ flex: 1 }}>
+        {/* graph */}
+        <Canvas width={canvasWidth} height={canvasHeight} colorFunction={(x, y) => complexColourNA(f(math.complex(x - 200, y - 200)))} />
+      </div>
+    </div>
   );
 }
 

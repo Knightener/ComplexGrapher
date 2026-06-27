@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 
-// Draws a square based on colorFunction, which takes two ints and returns an RGBA value.
+// Draws a square based on colorFunction, which takes two ints and returns an ABGR value.
 function Canvas({ width, height, colorFunction }) {
     const canvasRef = useRef(null);
 
@@ -23,7 +23,11 @@ function Canvas({ width, height, colorFunction }) {
         ctx.putImageData(imageData, 0, 0);
     }, [width, height, colorFunction]);
 
-    return <canvas ref={canvasRef} width={width} height={height} />
+    return <canvas 
+    ref={canvasRef} 
+    width={width} 
+    height={height} 
+     style={{ width: "100%", height: "100%" }}/>
 }
 
 export default Canvas

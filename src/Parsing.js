@@ -9,6 +9,7 @@ const SPECIAL_CHAR = '!'
 /* Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
 Invalid expression returns null.*/
 export function parseLatex(latex) {
+    console.log(latex)
     if (latex.includes("^{ }")) {
         return null
     }
@@ -21,11 +22,9 @@ export function parseLatex(latex) {
         if (right === "") {
             return null;
         }
-        
+
         const mathJSExpression = parseLatexToMathJS(right);
         const compiled = math.compile(mathJSExpression);
-
-        console.log(mathJSExpression)
         return (...values) => {
             const vars = {};
             varNames.forEach((name, i) => {
@@ -49,7 +48,10 @@ function parseLatexToMathJS(latex) {
         .replaceAll("\\", "")
         // Remaining spaces
         .replaceAll(" ", "")
+        // Remaining curly brackets (e.g, powers)
+        .replaceAll("{", "(").replaceAll("}",")")
 
+        console.log(parsed)
     return addMultiplications(parsed)
 }
 
@@ -101,15 +103,18 @@ function removeSpecial(string) {
 function addMultiplications(string) {
     string = protectSpecial(string)
     let active = true;
+    let curr, next;
     for (let i = 0; i < string.length - 1; i++) {
+        curr = string[i]
+        next = string[i+1]
         if (active) {
-            if (isAlphaNumerical(string[i]) && (isAlphaNumerical(string[i + 1]) || string[i + 1] === SPECIAL_CHAR)) {
+            if ((isAlphaNumerical(curr) && (isAlphaNumerical(next) || next === SPECIAL_CHAR)) && !(isNumber(curr) && isNumber(next))) {
                 string = string.slice(0, i + 1) + '*' + string.slice(i + 1)
                 // Accounts for length change
                 i++
             }
         }
-        if (string[i] === SPECIAL_CHAR) {
+        if (curr === SPECIAL_CHAR) {
             active = !active
         }
     }
@@ -118,6 +123,10 @@ function addMultiplications(string) {
 
 function isAlphaNumerical(character) {
     return /[a-zA-Z0-9]/.test(character);
+}
+
+function isNumber(character) {
+    return /[0-9]/.test(character);
 }
 
 // Returns the variable names of the latex expression (e.g. f(x,y) = x + y returns [x,y])
