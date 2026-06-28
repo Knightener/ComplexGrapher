@@ -1,20 +1,24 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Canvas from './Canvas'
 import './App.css'
 import Input from "./Input";
-import { parseLatex } from './Parsing';
 import * as math from "mathjs";
 import { complexColourNA } from './Color';
+import { parseLatex } from './Parsing';
 
 const defaultF = z => z;
-const pixelScale = 20;
+const pixelScale = 4;
 
 function App() {
   const [f, setF] = useState(() => defaultF);
-  const [view, setView] = useState({ zoom: 100, offset: { x: 0, y: 0 } });
+  const [view, setView] = useState({ zoom: 1, offset: { x: 0, y: 0 } });
   const viewRef = useRef(view);
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const colorFunction = useMemo(() => (x, y) => complexColourNA(f(math.complex(
+    (x - canvasWidth / 2 - view.offset.x) / view.zoom,
+    (y - canvasHeight / 2 - view.offset.y) / view.zoom
+  ))), [f, view]);
 
   // Adjused for sidebar
   const canvasWidth = Math.round(window.innerWidth * 0.8 / pixelScale);
@@ -89,6 +93,7 @@ function App() {
     <div style={{ display: "flex", height: "100vh" }}>
       {/* sidebar */}
       <div className="sidebar">
+
         <Input onChange={handleChange} />
       </div>
       {/* graph */}
@@ -96,10 +101,7 @@ function App() {
         <Canvas
           width={canvasWidth}
           height={canvasHeight}
-          colorFunction={(x, y) => complexColourNA(f(math.complex(
-            (x - canvasWidth / 2 - view.offset.x) / view.zoom,
-            (y - canvasHeight / 2 - view.offset.y) / view.zoom
-          )))}
+          colorFunction={colorFunction}
         />
       </div>
     </div>
