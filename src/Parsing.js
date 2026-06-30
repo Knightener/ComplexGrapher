@@ -1,5 +1,7 @@
 
 import { create, all } from 'mathjs';
+
+import { nodeToJS } from './ExpressionTreeTraversal';
 const math = create(all);
 
 const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi"];
@@ -9,7 +11,6 @@ const SPECIAL_CHAR = '!'
 /* Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
 Invalid expression returns null.*/
 export function parseLatex(latex) {
-    console.log(latex)
     if (latex.includes("^{ }")) {
         return null
     }
@@ -25,6 +26,7 @@ export function parseLatex(latex) {
 
         const mathJSExpression = parseLatexToMathJS(right);
         const compiled = math.compile(mathJSExpression);
+        console.log(nodeToJS(math.parse(mathJSExpression)))
         return (...values) => {
             const vars = {};
             varNames.forEach((name, i) => {
@@ -50,8 +52,6 @@ function parseLatexToMathJS(latex) {
         .replaceAll(" ", "")
         // Remaining curly brackets (e.g, powers)
         .replaceAll("{", "(").replaceAll("}",")")
-
-        console.log(parsed)
     return addMultiplications(parsed)
 }
 
