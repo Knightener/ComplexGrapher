@@ -1,40 +1,48 @@
-class Complex {
+
+export default class Complex {
 
     constructor(re, im = 0) {
-        return { re, im };
+        this.re = re;
+        this.im = im;
     }
 
     add(z) {
-        return { re: this.re + z.re, im: this.im + z.im };
+        return new Complex(this.re + z.re, this.im + z.im);
     }
 
     sub(z) {
-        return { re: this.re - z.re, im: this.im - z.im };
+        return new Complex(this.re - z.re, this.im - z.im);
     }
 
     mul(z) {
-        return { re: this.re * z.re - this.im * z.im, im: this.re * z.im + this.im * z.re };
+        return new Complex(
+            this.re * z.re - this.im * z.im,
+            this.re * z.im + this.im * z.re
+        );
     }
 
     scale(r) {
-        return { re: r * this.re, im: r * z.im };
+        return new Complex(r * this.re, r * this.im);
     }
 
     normSquared() {
-        return this.re * this.re + this.im + this.im;
+        return this.re * this.re + this.im * this.im;
     }
 
     norm() {
-        return Math.sqrt(this.re * this.re + this.im * this.im)
+        return Math.sqrt(this.re * this.re + this.im * this.im);
     }
 
     conj() {
-        return { re: this.re, im: -this.im }
+        return new Complex(this.re, -this.im);
     }
 
     div(z) {
         const normSquared = z.normSquared();
-        return { re: (this.re * z.re + this.im * z.im) / normSquared, im: (this.im * z.re - this.re * z.im) / normSquared };
+        return new Complex(
+            (this.re * z.re + this.im * z.im) / normSquared,
+            (this.im * z.re - this.re * z.im) / normSquared
+        );
     }
 
     arg() {
@@ -43,22 +51,28 @@ class Complex {
 
     exp() {
         const r = Math.exp(this.re);
-        return { re: r * Math.cos(this.im), im: r * Math.sin(this.im) };
+        return new Complex(r * Math.cos(this.im), r * Math.sin(this.im));
     }
 
-    sin(a) {
-        return { re: Math.sin(a.re) * Math.cosh(a.im), im: Math.cos(a.re) * Math.sinh(a.im) };
+    sin() {
+        return new Complex(
+            Math.sin(this.re) * Math.cosh(this.im),
+            Math.cos(this.re) * Math.sinh(this.im)
+        );
     }
 
-    cos(a) {
-        return { re: Math.cos(a.re) * Math.cosh(a.im), im: -Math.sin(a.re) * Math.sinh(a.im) };
+    cos() {
+        return new Complex(
+            Math.cos(this.re) * Math.cosh(this.im),
+            -Math.sin(this.re) * Math.sinh(this.im)
+        );
     }
 
     ln() {
-        return { re: Math.log(this.norm), im: this.arg()}
+        return new Complex(Math.log(this.norm()), this.arg());
     }
 
     pow(z) {
-        return this.ln().mul(z).exp()
+        return this.ln().mul(z).exp();
     }
 }

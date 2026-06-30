@@ -1,6 +1,6 @@
 
 import { create, all } from 'mathjs';
-
+import Complex from './Complex'
 import { nodeToJS } from './ExpressionTreeTraversal';
 const math = create(all);
 
@@ -25,15 +25,11 @@ export function parseLatex(latex) {
         }
 
         const mathJSExpression = parseLatexToMathJS(right);
-        const compiled = math.compile(mathJSExpression);
-        console.log(nodeToJS(math.parse(mathJSExpression)))
-        return (...values) => {
-            const vars = {};
-            varNames.forEach((name, i) => {
-                vars[name] = values[i];
-            });
-            return compiled.evaluate(vars);
-        };
+
+        const generatedCode = nodeToJS(math.parse(mathJSExpression))
+        const params = varNames.join(", ");
+        const fn = new Function("Complex", `return function(${params}) {return ${generatedCode};}`);
+        return fn(Complex);
     } catch {
         return null;
     }
@@ -51,7 +47,7 @@ function parseLatexToMathJS(latex) {
         // Remaining spaces
         .replaceAll(" ", "")
         // Remaining curly brackets (e.g, powers)
-        .replaceAll("{", "(").replaceAll("}",")")
+        .replaceAll("{", "(").replaceAll("}", ")")
     return addMultiplications(parsed)
 }
 
@@ -106,7 +102,7 @@ function addMultiplications(string) {
     let curr, next;
     for (let i = 0; i < string.length - 1; i++) {
         curr = string[i]
-        next = string[i+1]
+        next = string[i + 1]
         if (active) {
             if ((isAlphaNumerical(curr) && (isAlphaNumerical(next) || next === SPECIAL_CHAR)) && !(isNumber(curr) && isNumber(next))) {
                 string = string.slice(0, i + 1) + '*' + string.slice(i + 1)

@@ -5,6 +5,7 @@ import Input from "./Input";
 import * as math from "mathjs";
 import { complexColourNA } from './Color';
 import { parseLatex } from './Parsing';
+import Complex from './Complex'
 
 const defaultF = z => z;
 const pixelScale = 4;
@@ -15,7 +16,7 @@ function App() {
   const viewRef = useRef(view);
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
-  const colorFunction = useMemo(() => (x, y) => complexColourNA(f(math.complex(
+  const colorFunction = useMemo(() => (x, y) => complexColourNA(f(new Complex(
     (x - canvasWidth / 2 - view.offset.x) / view.zoom,
     (y - canvasHeight / 2 - view.offset.y) / view.zoom
   ))), [f, view]);
@@ -31,6 +32,7 @@ function App() {
 
   function handleChange(latex) {
     const fn = parseLatex(latex);
+    console.log(fn)
     if (fn !== null) {
       setF(() => fn);
     } else {

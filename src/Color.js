@@ -1,5 +1,6 @@
 
-import * as math from "mathjs"
+import Complex from "./Complex"
+
 // Returns the ABGR value as an int. h: 0-360, s:0-1, l:0-1
 function hslToABGR(h, s, l) {
     h = h % 360;
@@ -22,13 +23,12 @@ function hslToABGR(h, s, l) {
 
 // Converts a complex number to a colour based on the norm and argument (|z| = 0 -> black, |z| = 1 -> gray, |z| = infty -> white, arg(z) -> hue z)
 export function complexColourNA(z) {
-
-    const norm = math.norm(z);
+    const norm = z.norm();
     if (isNaN(norm) || !isFinite(norm)) {
         return 0xFFFFFFFF
     }
     // math.arg(z) returns  a value between -pi and pi
-    const hue = ((math.arg(z) * 180 / Math.PI) + 360);
+    const hue = ((z.arg() * 180 / Math.PI) + 360);
     return hslToABGR(hue, 1, norm / (norm + 1));
 }
 

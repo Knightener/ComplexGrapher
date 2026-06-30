@@ -16,18 +16,19 @@ function Canvas({ width, height, colorFunction }) {
                     pixels32[y * width + x] = colorFunction(x, y)
                 }
             }
-        } catch {
+        } catch (e){
+            console.error("draw error:", e);
             // Blank canvas on invalid expression
             ctx.clearRect(0, 0, width, height);
         }
         ctx.putImageData(imageData, 0, 0);
     }, [width, height, colorFunction]);
 
-    return <canvas 
-    ref={canvasRef} 
-    width={width} 
-    height={height} 
-     style={{ width: "100%", height: "100%" }}/>
+    return <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        style={{ width: "100%", height: "100%" }} />
 }
 
 export default Canvas
