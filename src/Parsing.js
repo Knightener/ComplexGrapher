@@ -26,8 +26,10 @@ export function parseLatex(latex) {
 
         const mathJSExpression = parseLatexToMathJS(right);
 
+        console.log(mathJSExpression)
+        
         const generatedCode = nodeToJS(math.parse(mathJSExpression))
-        const params = varNames.join(", ");
+        const params = varNames.join(", ").replaceAll("{","").replaceAll("}","");
         const fn = new Function("Complex", `return function(${params}) {return ${generatedCode};}`);
         return fn(Complex);
     } catch {
@@ -46,9 +48,10 @@ function parseLatexToMathJS(latex) {
         .replaceAll("\\", "")
         // Remaining spaces
         .replaceAll(" ", "")
-        // Remaining curly brackets (e.g, powers)
-        .replaceAll("{", "(").replaceAll("}", ")")
-    return addMultiplications(parsed)
+    parsed = addMultiplications(parsed)
+
+    // Remaining curly brackets (e.g, powers)
+    return parsed.replaceAll("{", "(").replaceAll("}", ")")
 }
 
 function parseLatexParentheses(latex) {
@@ -82,11 +85,17 @@ function extractBraceContent(string, start) {
     return null;
 }
 
-// Surrounds special strings with the special character
+// Surrounds function/constant strings with the special character
 function protectSpecial(string) {
     for (const special of SPECIAL) {
         string = string.replaceAll(special, SPECIAL_CHAR + special + SPECIAL_CHAR);
     }
+    // for (const constant of definedConstants) {
+    //     string = string.replaceAll(constant, SPECIAL_CHAR + constant + SPECIAL_CHAR);
+    // }
+    // for (const func of definedFunctions) {
+    //     string = string.replaceAll(func, SPECIAL_CHAR + func + SPECIAL_CHAR);
+    // }
     return string
 }
 
@@ -95,25 +104,55 @@ function removeSpecial(string) {
     return string.replaceAll(SPECIAL_CHAR, "")
 }
 
+function protectSubscripts(string) {
+    return string.replace(/[a-zA-Z]+_\{[a-zA-Z0-9]+\}/g, match =>
+        SPECIAL_CHAR + match + SPECIAL_CHAR
+    );
+}
+
+function protectVariables(string) {
+    let result = "";
+    let i = 0;
+    while (i < string.length) {
+        if (string[i] === SPECIAL_CHAR) {
+            // skip already-protected block
+            result += string[i];
+            i++;
+            while (string[i] !== SPECIAL_CHAR && i < string.length) {
+                result += string[i];
+                i++;
+            }
+            result += string[i];
+            i++;
+        } else if (/[0-9]/.test(string[i])) {
+            // protect whole number
+            let num = "";
+            while (/[0-9]/.test(string[i])) {
+                num += string[i];
+                i++;
+            }
+            result += SPECIAL_CHAR + num + SPECIAL_CHAR;
+        } else if (/[a-zA-Z]/.test(string[i])) {
+            // protect single variable letter
+            result += SPECIAL_CHAR + string[i] + SPECIAL_CHAR;
+            i++;
+        } else {
+            result += string[i];
+            i++;
+        }
+    }
+    return result;
+}
+
 // Adds multiplications between alphanumeric characters and before specials
 function addMultiplications(string) {
     string = protectSpecial(string)
-    let active = true;
-    let curr, next;
-    for (let i = 0; i < string.length - 1; i++) {
-        curr = string[i]
-        next = string[i + 1]
-        if (active) {
-            if ((isAlphaNumerical(curr) && (isAlphaNumerical(next) || next === SPECIAL_CHAR)) && !(isNumber(curr) && isNumber(next))) {
-                string = string.slice(0, i + 1) + '*' + string.slice(i + 1)
-                // Accounts for length change
-                i++
-            }
-        }
-        if (curr === SPECIAL_CHAR) {
-            active = !active
-        }
-    }
+    string = protectSubscripts(string)
+    string = protectVariables(string)
+
+    string.replaceAll(SPECIAL_CHAR + SPECIAL_CHAR, SPECIAL_CHAR + '*' + SPECIAL_CHAR);
+
+    string = string.replace(/_\{(\w+)\}/g, "_$1")
     return removeSpecial(string)
 }
 
@@ -129,4 +168,8 @@ function isNumber(character) {
 function getVariableNames(latex) {
     let varList = latex.slice(latex.indexOf("(") + 1, latex.indexOf(")"))
     return varList.split(",")
+}
+
+function getFunctionName(latex) {
+
 }
