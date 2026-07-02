@@ -1,4 +1,10 @@
 
+export let definedFunctions = new Map();
+export let definedConstants = new Map();
+
+// test
+definedFunctions.set("g", z => z.exp());
+
 export function nodeToJS(node) {
   if (node.type === "OperatorNode") {
     if (node.op === "*") return `${nodeToJS(node.args[0])}.mul(${nodeToJS(node.args[1])})`;
@@ -12,8 +18,18 @@ export function nodeToJS(node) {
     if (node.fn.name === "exp") return `${nodeToJS(node.args[0])}.exp()`;
     if (node.fn.name === "sin") return `${nodeToJS(node.args[0])}.sin()`;
     if (node.fn.name === "cos") return `${nodeToJS(node.args[0])}.cos()`;
+
+    // user defined functions
+    if (definedFunctions.has(node.fn.name)) {
+      const args = node.args.map(a => nodeToJS(a)).join(", ");
+      return `funcs.get("${node.fn.name}")(${args})`;
+    }
+
+    throw new Error(`undefined function: ${name}`);
   }
   if (node.type === "SymbolNode") return node.name;
   if (node.type === "ConstantNode") return `new Complex(${node.value})`;
   if (node.type === "ParenthesisNode") return `(${nodeToJS(node.content)})`;
+
+  throw new Error(`unsupported node type: ${node.type}`);
 }

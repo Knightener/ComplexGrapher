@@ -1,7 +1,8 @@
 
 import { create, all } from 'mathjs';
 import Complex from './Complex'
-import { nodeToJS } from './ExpressionTreeTraversal';
+import { definedFunctions, nodeToJS } from './ExpressionTreeTraversal';
+
 const math = create(all);
 
 const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi"];
@@ -30,8 +31,8 @@ export function parseLatex(latex) {
         
         const generatedCode = nodeToJS(math.parse(mathJSExpression))
         const params = varNames.join(", ").replaceAll("{","").replaceAll("}","");
-        const fn = new Function("Complex", `return function(${params}) {return ${generatedCode};}`);
-        return fn(Complex);
+        const fn = new Function("Complex", "funcs", `return function(${params}) {return ${generatedCode};}`);
+        return fn(Complex, definedFunctions);
     } catch {
         return null;
     }
@@ -90,12 +91,6 @@ function protectSpecial(string) {
     for (const special of SPECIAL) {
         string = string.replaceAll(special, SPECIAL_CHAR + special + SPECIAL_CHAR);
     }
-    // for (const constant of definedConstants) {
-    //     string = string.replaceAll(constant, SPECIAL_CHAR + constant + SPECIAL_CHAR);
-    // }
-    // for (const func of definedFunctions) {
-    //     string = string.replaceAll(func, SPECIAL_CHAR + func + SPECIAL_CHAR);
-    // }
     return string
 }
 
@@ -110,37 +105,21 @@ function protectSubscripts(string) {
     );
 }
 
+// runs after protectSpecial and protectSubscripts
 function protectVariables(string) {
-    let result = "";
-    let i = 0;
-    while (i < string.length) {
-        if (string[i] === SPECIAL_CHAR) {
-            // skip already-protected block
-            result += string[i];
-            i++;
-            while (string[i] !== SPECIAL_CHAR && i < string.length) {
-                result += string[i];
-                i++;
-            }
-            result += string[i];
-            i++;
-        } else if (/[0-9]/.test(string[i])) {
-            // protect whole number
-            let num = "";
-            while (/[0-9]/.test(string[i])) {
-                num += string[i];
-                i++;
-            }
-            result += SPECIAL_CHAR + num + SPECIAL_CHAR;
-        } else if (/[a-zA-Z]/.test(string[i])) {
-            // protect single variable letter
-            result += SPECIAL_CHAR + string[i] + SPECIAL_CHAR;
-            i++;
+    let active = true;
+    let result = ""
+    for (let i = 0; i < string.length; i++) {
+        if (string[i] == SPECIAL_CHAR) {
+            active = !active;
+        }
+        if (active && /[a-zA-Z]/.test(string[i])) {
+            result = result + SPECIAL_CHAR + string[i] + SPECIAL_CHAR;
         } else {
-            result += string[i];
-            i++;
+            result = result + string[i]
         }
     }
+    console.log(result)
     return result;
 }
 
@@ -150,8 +129,7 @@ function addMultiplications(string) {
     string = protectSubscripts(string)
     string = protectVariables(string)
 
-    string.replaceAll(SPECIAL_CHAR + SPECIAL_CHAR, SPECIAL_CHAR + '*' + SPECIAL_CHAR);
-
+    string = string.replaceAll(SPECIAL_CHAR + SPECIAL_CHAR, SPECIAL_CHAR + '*' + SPECIAL_CHAR);
     string = string.replace(/_\{(\w+)\}/g, "_$1")
     return removeSpecial(string)
 }
@@ -171,5 +149,5 @@ function getVariableNames(latex) {
 }
 
 function getFunctionName(latex) {
-
+    return latex.slice(0, latex.indexOf("("));
 }
