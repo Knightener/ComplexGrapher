@@ -6,38 +6,60 @@ import * as math from "mathjs";
 import { complexColourNA } from './Color';
 import { parseLatex } from './Parsing';
 import Complex from './Complex'
+import { definedFunctions } from './ExpressionTreeTraversal';
 
 const defaultF = z => z;
 const pixelScale = 4;
 
 function App() {
-  const [f, setF] = useState(() => defaultF);
   const [view, setView] = useState({ zoom: 1, offset: { x: 0, y: 0 } });
   const viewRef = useRef(view);
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
-  const colorFunction = useMemo(() => (x, y) => complexColourNA(f(new Complex(
+  const [equations, setEquations] = useState([{ id: 0, latex: "" }]);
+  const [graphFunction, setGraphFunction] = useState(() => defaultF);
+  const colorFunction = useMemo(() => (x, y) => complexColourNA(graphFunction(new Complex(
     (x - canvasWidth / 2 - view.offset.x) / view.zoom,
     (y - canvasHeight / 2 - view.offset.y) / view.zoom
-  ))), [f, view]);
+  ))), [graphFunction, view]);
+  const nextId = useRef(1);
 
   // Adjused for sidebar
   const canvasWidth = Math.round(window.innerWidth * 0.8 / pixelScale);
   const canvasHeight = Math.round(window.innerHeight / pixelScale);
 
+  function recompute(newEquations) {
+    definedFunctions.clear();
+    let lastFn = defaultF;
+
+    for (const eq of newEquations) {
+      if (!eq.trim()) continue;
+      const result = parseLatex(eq);
+      if (!result) continue;
+      definedFunctions.set(result.name, result.function);
+      lastFn = result.function;
+    }
+
+    setGraphFunction(() => lastFn);
+  }
+
+  function handleEquationChange(id, latex) {
+    setEquations(prev => {
+        const newEquations = prev.map(eq =>
+            eq.id === id ? { ...eq, latex } : eq
+        );
+        recompute(newEquations.map(eq => eq.latex));
+        return newEquations;
+    });
+  }
+
+  function addEquation() {
+    setEquations([...equations, { id: nextId.current++, latex: "" }]);
+  }
+
   function updateView(newView) {
     viewRef.current = newView;
     setView(newView);
-  }
-
-  function handleChange(latex) {
-    const fn = parseLatex(latex);
-    console.log(fn)
-    if (fn !== null) {
-      setF(() => fn);
-    } else {
-      console.log("invalid expression");
-    }
   }
 
   useEffect(() => {
@@ -95,8 +117,10 @@ function App() {
     <div style={{ display: "flex", height: "100vh" }}>
       {/* sidebar */}
       <div className="sidebar">
-
-        <Input onChange={handleChange} />
+        {equations.map(eq => (
+          <Input key={eq.id} initialValue={eq.latex} onChange={(latex) => handleEquationChange(eq.id, latex)} />
+        ))}
+        <button onClick={addEquation}>+</button>
       </div>
       {/* graph */}
       <div style={{ flex: 1 }}>

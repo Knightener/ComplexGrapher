@@ -32,7 +32,7 @@ export function parseLatex(latex) {
         const generatedCode = nodeToJS(math.parse(mathJSExpression))
         const params = varNames.join(", ").replaceAll("{","").replaceAll("}","");
         const fn = new Function("Complex", "funcs", `return function(${params}) {return ${generatedCode};}`);
-        return fn(Complex, definedFunctions);
+        return {name: getFunctionName(latex), function: fn(Complex, definedFunctions)};
     } catch {
         return null;
     }
@@ -132,14 +132,6 @@ function addMultiplications(string) {
     string = string.replaceAll(SPECIAL_CHAR + SPECIAL_CHAR, SPECIAL_CHAR + '*' + SPECIAL_CHAR);
     string = string.replace(/_\{(\w+)\}/g, "_$1")
     return removeSpecial(string)
-}
-
-function isAlphaNumerical(character) {
-    return /[a-zA-Z0-9]/.test(character);
-}
-
-function isNumber(character) {
-    return /[0-9]/.test(character);
 }
 
 // Returns the variable names of the latex expression (e.g. f(x,y) = x + y returns [x,y])
