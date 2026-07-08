@@ -1,9 +1,9 @@
 
 .mq-box {
-  width: 100%;
+  width: 80%;
   aspect-ratio: 6/1;
-  align-items: center 
 }
+
 .sidebar {
   width: 20vw;
   min-width: 150px;
@@ -12,6 +12,8 @@
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  resize: horizontal; 
+  overflow: auto;
 }
 .mq-box .mq-editable-field {
   width: 100%;

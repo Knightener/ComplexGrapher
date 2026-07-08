@@ -23,33 +23,35 @@ function App() {
     (y - canvasHeight / 2 - view.offset.y) / view.zoom
   ))), [graphFunction, view]);
   const nextId = useRef(1);
+  const [selectedId, setSelectedId] = useState(0);
 
   // Adjused for sidebar
   const canvasWidth = Math.round(window.innerWidth * 0.8 / pixelScale);
   const canvasHeight = Math.round(window.innerHeight / pixelScale);
 
-  function recompute(newEquations) {
+  function recompute(newEquations, activeId) {
+    console.log(definedFunctions)
     definedFunctions.clear();
-    let lastFn = defaultF;
+    let activeF = defaultF;
 
     for (const eq of newEquations) {
-      if (!eq.trim()) continue;
-      const result = parseLatex(eq);
+      if (!eq.latex.trim()) continue;
+      const result = parseLatex(eq.latex);
       if (!result) continue;
       definedFunctions.set(result.name, result.function);
-      lastFn = result.function;
+      if (eq.id === activeId) activeF = result.function;
     }
 
-    setGraphFunction(() => lastFn);
+    setGraphFunction(() => activeF);
   }
 
   function handleEquationChange(id, latex) {
     setEquations(prev => {
-        const newEquations = prev.map(eq =>
-            eq.id === id ? { ...eq, latex } : eq
-        );
-        recompute(newEquations.map(eq => eq.latex));
-        return newEquations;
+      const newEquations = prev.map(eq =>
+        eq.id === id ? { ...eq, latex } : eq
+      );
+      recompute(newEquations, selectedId);
+      return newEquations;
     });
   }
 
@@ -113,14 +115,34 @@ function App() {
     };
   }, []);
 
-  return (
+return (
     <div style={{ display: "flex", height: "100vh" }}>
       {/* sidebar */}
       <div className="sidebar">
         {equations.map(eq => (
-          <Input key={eq.id} initialValue={eq.latex} onChange={(latex) => handleEquationChange(eq.id, latex)} />
+          <div key={eq.id} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Input
+              initialValue={eq.latex}
+              onChange={(latex) => handleEquationChange(eq.id, latex)}
+            />
+            <button
+              onClick={() => {
+                setSelectedId(eq.id);
+                recompute(equations, eq.id);
+              }}
+              style={{
+                flex: 1,
+                alignSelf: "stretch",
+                background: selectedId === eq.id ? "lime" : "red",
+                cursor: "pointer",
+                padding: "4px 0px",
+                textAlign: "center"
+              }}
+            >
+            </button>
+          </div>
         ))}
-        <button onClick={addEquation}>+</button>
+        <button onClick={addEquation}>+ add</button>
       </div>
       {/* graph */}
       <div style={{ flex: 1 }}>

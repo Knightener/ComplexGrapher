@@ -26,8 +26,6 @@ export function parseLatex(latex) {
         }
 
         const mathJSExpression = parseLatexToMathJS(right);
-
-        console.log(mathJSExpression)
         
         const generatedCode = nodeToJS(math.parse(mathJSExpression))
         const params = varNames.join(", ").replaceAll("{","").replaceAll("}","");
@@ -119,7 +117,6 @@ function protectVariables(string) {
             result = result + string[i]
         }
     }
-    console.log(result)
     return result;
 }
 
@@ -141,5 +138,5 @@ function getVariableNames(latex) {
 }
 
 function getFunctionName(latex) {
-    return latex.slice(0, latex.indexOf("("));
+    return latex.slice(0, latex.indexOf("(")).replaceAll("{","").replaceAll("}","");
 }
