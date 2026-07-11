@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import Canvas from './Canvas'
 import './App.css'
 import Input from "./Input";
@@ -12,12 +12,13 @@ const defaultF = z => z;
 const pixelScale = 4;
 
 function App() {
-  const { view, canvasWidth, canvasHeight } = useGraphView(sidebarWidth, pixelScale);
-
   const [equations, setEquations] = useState([{ id: 0, latex: "" }]);
   const [graphFunction, setGraphFunction] = useState(() => defaultF);
   const [selectedId, setSelectedId] = useState(0);
   const nextId = useRef(1);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const isResizingSidebar = useRef(false);
+  const { view, canvasWidth, canvasHeight } =  useGraphView(sidebarWidth, pixelScale, isResizingSidebar);
 
   const colorFunction = useMemo(() => (x, y) => complexColourNA(graphFunction(new Complex(
     (x - canvasWidth / 2 - view.offset.x) / view.zoom,
@@ -49,9 +50,34 @@ function App() {
     });
   }
 
+  function handleResizeMouseDown(e) {
+    isResizingSidebar.current = true;
+    isDraggingRef.current = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   function addEquation() {
     setEquations([...equations, { id: nextId.current++, latex: "" }]);
   }
+
+  useEffect(() => {
+    function handleResizeMouseMove(e) {
+      if (!isResizingSidebar.current) return;
+      setSidebarWidth(Math.min(Math.max(e.clientX, 150), 600));
+    }
+
+    function handleResizeMouseUp() {
+      isResizingSidebar.current = false;
+    }
+
+    window.addEventListener("mousemove", handleResizeMouseMove);
+    window.addEventListener("mouseup", handleResizeMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleResizeMouseMove);
+      window.removeEventListener("mouseup", handleResizeMouseUp);
+    };
+  }, []);
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
@@ -82,6 +108,10 @@ function App() {
         <button onClick={addEquation}>+ add</button>
       </div>
 
+      <div
+        onMouseDown={handleResizeMouseDown}
+        style={{ width: "6px", cursor: "col-resize", background: "transparent", flexShrink: 0 }}
+      />
       <div style={{ flex: 1 }}>
         <Canvas
           width={canvasWidth}

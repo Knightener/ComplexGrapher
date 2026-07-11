@@ -1,33 +1,43 @@
 import { useRef, useEffect } from "react";
 
-// Draws a square based on colorFunction, which takes two ints and returns an ABGR value.
 function Canvas({ width, height, colorFunction }) {
     const canvasRef = useRef(null);
+    const draw = useRef(() => {});
 
-    useEffect(() => {
-
+    draw.current = () => {
         const canvas = canvasRef.current;
+        canvas.width = width;   // buffer resize (and clear) happens here now, only when we actually draw
+        canvas.height = height;
+
         const ctx = canvas.getContext("2d");
         const imageData = ctx.createImageData(width, height);
         const pixels32 = new Uint32Array(imageData.data.buffer);
         try {
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
-                    pixels32[y * width + x] = colorFunction(x, y)
+                    pixels32[y * width + x] = colorFunction(x, y);
                 }
             }
-        } catch (e){
+        } catch (e) {
             console.error("draw error:", e);
-            // Blank canvas on invalid expression
             ctx.clearRect(0, 0, width, height);
         }
         ctx.putImageData(imageData, 0, 0);
-    }, [width, height, colorFunction]);
+    };
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            draw.current();
+        }, 100);
+        return () => clearTimeout(timeoutId);
+    }, [width, height]);
+
+    useEffect(() => {
+        draw.current();
+    }, [colorFunction]);
 
     return <canvas
         ref={canvasRef}
-        width={width}
-        height={height}
         style={{ width: "100%", height: "100%" }} />
 }
 
