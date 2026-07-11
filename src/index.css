@@ -1,7 +1,9 @@
 
 .mq-box {
-  width: 80%;
-  aspect-ratio: 6/1;
+   flex: 1;
+   min-width: 0;
+   height: 40px;
+  
 }
 
 .sidebar {
