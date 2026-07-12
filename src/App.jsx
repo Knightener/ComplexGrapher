@@ -116,7 +116,7 @@ function App() {
         <Canvas
           width={canvasWidth}
           height={canvasHeight}
-          colorFunction={colorFunction}
+          view={view}
         />
       </div>
     </div>

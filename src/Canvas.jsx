@@ -1,44 +1,62 @@
 import { useRef, useEffect } from "react";
+import { compileShader, createProgram } from "./webglUtils";
+import { vertexShaderSource, buildFragmentShaderSource } from "./shaders";
 
 function Canvas({ width, height, colorFunction }) {
-    const canvasRef = useRef(null);
-    const draw = useRef(() => {});
+  const canvasRef = useRef(null);
+  const glRef = useRef(null);
+  const programRef = useRef(null);
+  const draw = useRef(() => {});
 
-    draw.current = () => {
-        const canvas = canvasRef.current;
-        canvas.width = width;   // buffer resize (and clear) happens here now, only when we actually draw
-        canvas.height = height;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const gl = canvas.getContext("webgl");
+    if (!gl) {
+      console.error("WebGL not supported");
+      return;
+    }
+    glRef.current = gl;
 
-        const ctx = canvas.getContext("2d");
-        const imageData = ctx.createImageData(width, height);
-        const pixels32 = new Uint32Array(imageData.data.buffer);
-        try {
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    pixels32[y * width + x] = colorFunction(x, y);
-                }
-            }
-        } catch (e) {
-            console.error("draw error:", e);
-            ctx.clearRect(0, 0, width, height);
-        }
-        ctx.putImageData(imageData, 0, 0);
-    };
+    const program = createProgram(gl, vertexShaderSource, buildFragmentShaderSource());
+    if (!program) return;
+    programRef.current = program;
+    gl.useProgram(program);
 
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            draw.current();
-        }, 100);
-        return () => clearTimeout(timeoutId);
-    }, [width, height]);
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1,  -1, 1,
+      -1, 1,   1, -1,   1, 1,
+    ]), gl.STATIC_DRAW);
 
-    useEffect(() => {
-        draw.current();
-    }, [colorFunction]);
+    const positionLoc = gl.getAttribLocation(program, "a_position");
+    gl.enableVertexAttribArray(positionLoc);
+    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+  }, []);
 
-    return <canvas
-        ref={canvasRef}
-        style={{ width: "100%", height: "100%" }} />
+  draw.current = () => {
+    const gl = glRef.current;
+    const program = programRef.current;
+    if (!gl || !program) return;
+
+    const canvas = canvasRef.current;
+    canvas.width = width;
+    canvas.height = height;
+    gl.viewport(0, 0, width, height);
+    gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), width, height);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => { draw.current(); }, 100);
+    return () => clearTimeout(timeoutId);
+  }, [width, height]);
+
+  useEffect(() => {
+    draw.current();
+  }, [colorFunction]);
+
+  return <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
 }
 
-export default Canvas
+export default Canvas;
