@@ -1,12 +1,13 @@
 import { useRef, useEffect } from "react";
-import { compileShader, createProgram } from "./webglUtils";
+import { createProgram } from "./webglUtils";
 import { vertexShaderSource, buildFragmentShaderSource } from "./shaders";
 
-function Canvas({ width, height, colorFunction }) {
+function Canvas({ width, height, glslExpression }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
   const programRef = useRef(null);
   const draw = useRef(() => {});
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -17,22 +18,29 @@ function Canvas({ width, height, colorFunction }) {
     }
     glRef.current = gl;
 
-    const program = createProgram(gl, vertexShaderSource, buildFragmentShaderSource());
-    if (!program) return;
-    programRef.current = program;
-    gl.useProgram(program);
-
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
       -1, -1,  1, -1,  -1, 1,
       -1, 1,   1, -1,   1, 1,
     ]), gl.STATIC_DRAW);
+  }, []);
+
+  useEffect(() => {
+    const gl = glRef.current;
+    if (!gl || !glslExpression) return;
+
+    const program = createProgram(gl, vertexShaderSource, buildFragmentShaderSource(glslExpression));
+    if (!program) return;
+    programRef.current = program;
+    gl.useProgram(program);
 
     const positionLoc = gl.getAttribLocation(program, "a_position");
     gl.enableVertexAttribArray(positionLoc);
     gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-  }, []);
+
+    draw.current();
+  }, [glslExpression]);
 
   draw.current = () => {
     const gl = glRef.current;
@@ -51,10 +59,6 @@ function Canvas({ width, height, colorFunction }) {
     const timeoutId = setTimeout(() => { draw.current(); }, 100);
     return () => clearTimeout(timeoutId);
   }, [width, height]);
-
-  useEffect(() => {
-    draw.current();
-  }, [colorFunction]);
 
   return <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
 }

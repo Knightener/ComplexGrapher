@@ -1,44 +1,33 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Canvas from './Canvas'
 import './App.css'
 import Input from "./Input";
-import { complexColourNA } from './Color';
-import { parseLatexToJS } from './Parsing';
-import Complex from './Complex'
-import { definedFunctions } from './ExpressionTreeTraversal';
-import useGraphView from './useGraphView';
+import { parseLatexToGLSL } from './Parsing';
 
-const defaultF = z => z;
 const pixelScale = 4;
 
 function App() {
-  const [equations, setEquations] = useState([{ id: 0, latex: "" }]);
-  const [graphFunction, setGraphFunction] = useState(() => defaultF);
-  const [selectedId, setSelectedId] = useState(0);
-  const nextId = useRef(1);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const isResizingSidebar = useRef(false);
-  const { view, canvasWidth, canvasHeight } =  useGraphView(sidebarWidth, pixelScale, isResizingSidebar);
 
-  const colorFunction = useMemo(() => (x, y) => complexColourNA(graphFunction(new Complex(
-    (x - canvasWidth / 2 - view.offset.x) / view.zoom,
-    (y - canvasHeight / 2 - view.offset.y) / view.zoom
-  ))), [graphFunction, view, canvasWidth, canvasHeight]);
+  const [equations, setEquations] = useState([{ id: 0, latex: "" }]);
+  const [selectedId, setSelectedId] = useState(0);
+  const [activeGLSL, setActiveGLSL] = useState(null);
+  const nextId = useRef(1);
 
-  function recompute(newEquations, activeId) {
-    definedFunctions.clear();
-    let activeF = defaultF;
+  const canvasWidth = Math.round((window.innerWidth - sidebarWidth) / pixelScale);
+  const canvasHeight = Math.round(window.innerHeight / pixelScale);
 
-    for (const eq of newEquations) {
-      if (!eq.latex.trim()) continue;
-      const result = parseLatexToJS(eq.latex);
-      if (!result) continue;
-      definedFunctions.set(result.name, result.function);
-      if (eq.id === activeId) activeF = result.function;
+function recompute(newEquations, activeId) {
+    const eq = newEquations.find(e => e.id === activeId);
+    if (!eq || !eq.latex.trim()) {
+      setActiveGLSL(null);
+      return;
     }
-
-    setGraphFunction(() => activeF);
-  }
+    const result = parseLatexToGLSL(eq.latex);
+    console.log("latex:", eq.latex, "-> glsl:", result ? result.function : null);
+    setActiveGLSL(result ? result.function : null);
+}
 
   function handleEquationChange(id, latex) {
     setEquations(prev => {
@@ -50,15 +39,13 @@ function App() {
     });
   }
 
-  function handleResizeMouseDown(e) {
-    isResizingSidebar.current = true;
-    isDraggingRef.current = false;
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
   function addEquation() {
     setEquations([...equations, { id: nextId.current++, latex: "" }]);
+  }
+
+  function handleResizeMouseDown(e) {
+    isResizingSidebar.current = true;
+    e.preventDefault();
   }
 
   useEffect(() => {
@@ -66,11 +53,9 @@ function App() {
       if (!isResizingSidebar.current) return;
       setSidebarWidth(Math.min(Math.max(e.clientX, 150), 600));
     }
-
     function handleResizeMouseUp() {
       isResizingSidebar.current = false;
     }
-
     window.addEventListener("mousemove", handleResizeMouseMove);
     window.addEventListener("mouseup", handleResizeMouseUp);
     return () => {
@@ -112,11 +97,12 @@ function App() {
         onMouseDown={handleResizeMouseDown}
         style={{ width: "6px", cursor: "col-resize", background: "transparent", flexShrink: 0 }}
       />
+
       <div style={{ flex: 1 }}>
         <Canvas
           width={canvasWidth}
           height={canvasHeight}
-          colorFunction={colorFunction}
+          glslExpression={activeGLSL}
         />
       </div>
     </div>
