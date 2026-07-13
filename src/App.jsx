@@ -3,7 +3,7 @@ import Canvas from './Canvas'
 import './App.css'
 import Input from "./Input";
 import { complexColourNA } from './Color';
-import { parseLatex } from './Parsing';
+import { parseLatexToJS } from './Parsing';
 import Complex from './Complex'
 import { definedFunctions } from './ExpressionTreeTraversal';
 import useGraphView from './useGraphView';
@@ -31,7 +31,7 @@ function App() {
 
     for (const eq of newEquations) {
       if (!eq.latex.trim()) continue;
-      const result = parseLatex(eq.latex);
+      const result = parseLatexToJS(eq.latex);
       if (!result) continue;
       definedFunctions.set(result.name, result.function);
       if (eq.id === activeId) activeF = result.function;
@@ -116,7 +116,7 @@ function App() {
         <Canvas
           width={canvasWidth}
           height={canvasHeight}
-          view={view}
+          colorFunction={colorFunction}
         />
       </div>
     </div>

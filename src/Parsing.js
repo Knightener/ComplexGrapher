@@ -1,7 +1,7 @@
 
 import { create, all } from 'mathjs';
 import Complex from './Complex'
-import { definedFunctions, nodeToJS } from './ExpressionTreeTraversal';
+import { definedFunctions, nodeToGLSL, nodeToJS } from './ExpressionTreeTraversal';
 
 const math = create(all);
 
@@ -11,7 +11,7 @@ const SPECIAL_CHAR = '!'
 
 /* Parses a latex expression into a lambda (e.g. f(x,y) = x + y returns a lambda of two variables representing x + y)
 Invalid expression returns null.*/
-export function parseLatex(latex) {
+export function parseLatexToJS(latex) {
     if (latex.includes("^{ }")) {
         return null
     }
@@ -31,6 +31,28 @@ export function parseLatex(latex) {
         const params = varNames.join(", ").replaceAll("{","").replaceAll("}","");
         const fn = new Function("Complex", "funcs", `return function(${params}) {return ${generatedCode};}`);
         return {name: getFunctionName(latex), function: fn(Complex, definedFunctions)};
+    } catch {
+        return null;
+    }
+}
+
+export function parseLatexToGLSL(latex) {
+    if (latex.includes("^{ }")) {
+        return null
+    }
+    try {
+        latex = parseLatexParentheses(latex)
+        const varNames = getVariableNames(latex);
+        const right = latex.split("=")[1].trim();
+
+        // empty function
+        if (right === "") {
+            return null;
+        }
+
+        const mathJSExpression = parseLatexToMathJS(right);
+        
+        return {name: getFunctionName(latex), function: nodeToGLSL(math.parse(mathJSExpression))};
     } catch {
         return null;
     }
