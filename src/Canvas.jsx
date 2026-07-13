@@ -2,12 +2,11 @@ import { useRef, useEffect } from "react";
 import { createProgram } from "./webglUtils";
 import { vertexShaderSource, buildFragmentShaderSource } from "./shaders";
 
-function Canvas({ width, height, glslExpression }) {
+function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
   const programRef = useRef(null);
   const draw = useRef(() => {});
-
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -52,6 +51,8 @@ function Canvas({ width, height, glslExpression }) {
     canvas.height = height;
     gl.viewport(0, 0, width, height);
     gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), width, height);
+    gl.uniform1f(gl.getUniformLocation(program, "u_zoom"), zoom);
+    gl.uniform2f(gl.getUniformLocation(program, "u_offset"), offsetX, -offsetY);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   };
 
@@ -59,6 +60,10 @@ function Canvas({ width, height, glslExpression }) {
     const timeoutId = setTimeout(() => { draw.current(); }, 100);
     return () => clearTimeout(timeoutId);
   }, [width, height]);
+
+  useEffect(() => {
+    draw.current();
+  }, [zoom, offsetX, offsetY]);
 
   return <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
 }

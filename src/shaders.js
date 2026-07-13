@@ -9,6 +9,8 @@ export function buildFragmentShaderSource(expression) {
   return `
     precision highp float;
     uniform vec2 u_resolution;
+    uniform float u_zoom;
+    uniform vec2 u_offset;
 
     float sinh(float x) { return (exp(x) - exp(-x)) / 2.0; }
     float cosh(float x) { return (exp(x) + exp(-x)) / 2.0; }
@@ -40,7 +42,7 @@ export function buildFragmentShaderSource(expression) {
     }
 
     void main() {
-      vec2 z = (gl_FragCoord.xy - u_resolution / 2.0) / 50.0;
+      vec2 z = (gl_FragCoord.xy - u_resolution / 2.0 - u_offset) / u_zoom;
       vec2 result = ${expression};
 
       float r = length(result);

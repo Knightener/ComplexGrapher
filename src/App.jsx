@@ -3,6 +3,7 @@ import Canvas from './Canvas'
 import './App.css'
 import Input from "./Input";
 import { parseLatexToGLSL } from './Parsing';
+import useGraphView from './useGraphView';
 
 const pixelScale = 4;
 
@@ -15,8 +16,7 @@ function App() {
   const [activeGLSL, setActiveGLSL] = useState(null);
   const nextId = useRef(1);
 
-  const canvasWidth = Math.round((window.innerWidth - sidebarWidth) / pixelScale);
-  const canvasHeight = Math.round(window.innerHeight / pixelScale);
+  const { view, canvasWidth, canvasHeight } = useGraphView(sidebarWidth, pixelScale, isResizingSidebar);
 
 function recompute(newEquations, activeId) {
     const eq = newEquations.find(e => e.id === activeId);
@@ -99,11 +99,14 @@ function recompute(newEquations, activeId) {
       />
 
       <div style={{ flex: 1 }}>
-        <Canvas
-          width={canvasWidth}
-          height={canvasHeight}
-          glslExpression={activeGLSL}
-        />
+<Canvas
+  width={canvasWidth}
+  height={canvasHeight}
+  glslExpression={activeGLSL}
+  zoom={view.zoom}
+  offsetX={view.offset.x}
+  offsetY={view.offset.y}
+/>
       </div>
     </div>
   );
