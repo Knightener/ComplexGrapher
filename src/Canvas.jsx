@@ -6,22 +6,20 @@ function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
   const programRef = useRef(null);
-  const draw = useRef(() => {});
+  const draw = useRef(() => { });
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const gl = canvas.getContext("webgl");
-    if (!gl) {
-      console.error("WebGL not supported");
-      return;
-    }
+    const gl = canvas.getContext("webgl2");
+    console.log("WebGL2 context:", gl);
+    if (!gl) { console.error("WebGL2 not supported"); return; }
     glRef.current = gl;
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-      -1, -1,  1, -1,  -1, 1,
-      -1, 1,   1, -1,   1, 1,
+      -1, -1, 1, -1, -1, 1,
+      -1, 1, 1, -1, 1, 1,
     ]), gl.STATIC_DRAW);
   }, []);
 

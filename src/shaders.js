@@ -1,22 +1,21 @@
 import { buildDefinedFunctionsGLSL } from './ExpressionTreeTraversal';
 
 
-export const vertexShaderSource = `
-  attribute vec2 a_position;
+export const vertexShaderSource = `#version 300 es
+  in vec2 a_position;
   void main() {
     gl_Position = vec4(a_position, 0.0, 1.0);
   }
 `;
 
 export function buildFragmentShaderSource(expression) {
-  return `
+  return `#version 300 es
     precision highp float;
     uniform vec2 u_resolution;
     uniform float u_zoom;
     uniform vec2 u_offset;
+    out vec4 outColor;
 
-    float sinh(float x) { return (exp(x) - exp(-x)) / 2.0; }
-    float cosh(float x) { return (exp(x) + exp(-x)) / 2.0; }
     vec2 cmul(vec2 a, vec2 b) { return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x); }
     vec2 cdiv(vec2 a, vec2 b) {
       float d = b.x*b.x + b.y*b.y;
@@ -45,16 +44,22 @@ export function buildFragmentShaderSource(expression) {
     }
 
     ${buildDefinedFunctionsGLSL()}
-    
+
     void main() {
       vec2 z = (gl_FragCoord.xy - u_resolution / 2.0 - u_offset) / u_zoom;
       vec2 result = ${expression};
 
       float r = length(result);
+
+      if (isnan(r) || isinf(r)) {
+        outColor = vec4(1.0, 1.0, 1.0, 1.0);
+        return;
+      }
+
       float theta = atan(result.y, result.x);
       float hue = (theta + 3.14159265) / (2.0 * 3.14159265);
       float lightness = r / (r + 1.0);
-      gl_FragColor = vec4(hsl2rgb(vec3(hue, 1.0, lightness)), 1.0);
+      outColor = vec4(hsl2rgb(vec3(hue, 1.0, lightness)), 1.0);
     }
   `;
 }
