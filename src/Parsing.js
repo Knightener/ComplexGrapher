@@ -26,11 +26,11 @@ export function parseLatexToJS(latex) {
         }
 
         const mathJSExpression = parseLatexToMathJS(right);
-        
+
         const generatedCode = nodeToJS(math.parse(mathJSExpression))
-        const params = varNames.join(", ").replaceAll("{","").replaceAll("}","");
+        const params = varNames.join(", ").replaceAll("{", "").replaceAll("}", "");
         const fn = new Function("Complex", "funcs", `return function(${params}) {return ${generatedCode};}`);
-        return {name: getFunctionName(latex), function: fn(Complex, definedFunctions)};
+        return { name: getFunctionName(latex), function: fn(Complex, definedFunctions) };
     } catch {
         return null;
     }
@@ -51,8 +51,13 @@ export function parseLatexToGLSL(latex) {
         }
 
         const mathJSExpression = parseLatexToMathJS(right);
-        
-        return {name: getFunctionName(latex), function: nodeToGLSL(math.parse(mathJSExpression))};
+        const paramNames = varNames.map(v => v.replaceAll("{", "").replaceAll("}", ""));
+
+        return {
+            name: getFunctionName(latex),
+            function: nodeToGLSL(math.parse(mathJSExpression)),
+            paramNames
+        };
     } catch {
         return null;
     }
@@ -160,5 +165,5 @@ function getVariableNames(latex) {
 }
 
 function getFunctionName(latex) {
-    return latex.slice(0, latex.indexOf("(")).replaceAll("{","").replaceAll("}","");
+    return latex.slice(0, latex.indexOf("(")).replaceAll("{", "").replaceAll("}", "");
 }

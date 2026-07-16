@@ -4,8 +4,9 @@ import './App.css'
 import Input from "./Input";
 import { parseLatexToGLSL } from './Parsing';
 import useGraphView from './useGraphView';
+import { definedFunctions } from './ExpressionTreeTraversal';
 
-const pixelScale = 4;
+const pixelScale = 1;
 
 function App() {
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -19,14 +20,19 @@ function App() {
   const { view, canvasWidth, canvasHeight } = useGraphView(sidebarWidth, pixelScale, isResizingSidebar);
 
 function recompute(newEquations, activeId) {
-    const eq = newEquations.find(e => e.id === activeId);
-    if (!eq || !eq.latex.trim()) {
-      setActiveGLSL(null);
-      return;
-    }
+  definedFunctions.clear();
+  let activeGLSLCode = null;
+
+  for (const eq of newEquations) {
+    if (!eq.latex.trim()) continue;
     const result = parseLatexToGLSL(eq.latex);
-    console.log("latex:", eq.latex, "-> glsl:", result ? result.function : null);
-    setActiveGLSL(result ? result.function : null);
+    if (!result) continue;
+    definedFunctions.set(result.name, { paramNames: result.paramNames, body: result.function });
+    if (eq.id === activeId) activeGLSLCode = result.function;
+  }
+
+  console.log("all definedFunctions:", [...definedFunctions.entries()]);
+  setActiveGLSL(activeGLSLCode);
 }
 
   function handleEquationChange(id, latex) {

@@ -1,3 +1,6 @@
+import { buildDefinedFunctionsGLSL } from './ExpressionTreeTraversal';
+
+
 export const vertexShaderSource = `
   attribute vec2 a_position;
   void main() {
@@ -41,6 +44,8 @@ export function buildFragmentShaderSource(expression) {
       return rgb + vec3(m);
     }
 
+    ${buildDefinedFunctionsGLSL()}
+    
     void main() {
       vec2 z = (gl_FragCoord.xy - u_resolution / 2.0 - u_offset) / u_zoom;
       vec2 result = ${expression};

@@ -45,7 +45,7 @@ export function nodeToGLSL(node) {
     if (node.fn.name === "exp") return `cexp(${nodeToGLSL(node.args[0])})`;
     if (node.fn.name === "sin") return `csin(${nodeToGLSL(node.args[0])})`;
     if (node.fn.name === "cos") return `ccos(${nodeToGLSL(node.args[0])})`;
-    
+
     if (definedFunctions.has(node.fn.name)) {
       const args = node.args.map(a => nodeToGLSL(a)).join(", ");
       return `${node.fn.name}(${args})`;
@@ -58,4 +58,15 @@ export function nodeToGLSL(node) {
   if (node.type === "ParenthesisNode") return `(${nodeToGLSL(node.content)})`;
 
   throw new Error(`unsupported node type: ${node.type}`);
+}
+
+export function buildDefinedFunctionsGLSL() {
+  let source = "";
+  for (const [name, entry] of definedFunctions.entries()) {
+    console.log("entry:", name, entry);
+    const { paramNames, body } = entry;
+    const params = paramNames.map(p => `vec2 ${p}`).join(", ");
+    source += `vec2 ${name}(${params}) {\n  return ${body};\n}\n\n`;
+  }
+  return source;
 }
