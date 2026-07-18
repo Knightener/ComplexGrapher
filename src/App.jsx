@@ -18,6 +18,9 @@ function App() {
   const [activeGLSL, setActiveGLSL] = useState(null);
   const nextId = useRef(1);
 
+  // ticks every time recompute is called
+  const [version, setVersion] = useState(0);
+
   const { view, canvasWidth, canvasHeight } = useGraphView(sidebarWidth, pixelScale, isResizingSidebar);
 
 function recompute(newEquations, activeId) {
@@ -44,6 +47,7 @@ function recompute(newEquations, activeId) {
   }
 
   setActiveGLSL(activeGLSLCode);
+   setVersion(v => v + 1);
 }
 
   function handleEquationChange(id, latex) {
@@ -123,6 +127,7 @@ function recompute(newEquations, activeId) {
   zoom={view.zoom}
   offsetX={view.offset.x}
   offsetY={view.offset.y}
+  shaderVersion={version}
 />
       </div>
     </div>

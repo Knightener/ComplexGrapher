@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { createProgram } from "./webglUtils";
 import { vertexShaderSource, buildFragmentShaderSource } from "./shaders";
 
-function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY }) {
+function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY, shaderVersion  }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
   const programRef = useRef(null);
@@ -37,7 +37,7 @@ function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY }) {
     gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
     draw.current();
-  }, [glslExpression]);
+  }, [shaderVersion , glslExpression]);
 
   draw.current = () => {
     const gl = glRef.current;
