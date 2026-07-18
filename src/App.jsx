@@ -4,7 +4,8 @@ import './App.css'
 import Input from "./Input";
 import { parseLatexToGLSL } from './Parsing';
 import useGraphView from './useGraphView';
-import { definedFunctions } from './ExpressionTreeTraversal';
+import { definedFunctions, topoSortFunctions } from './ExpressionTreeTraversal';
+
 
 const pixelScale = 1;
 
@@ -20,18 +21,28 @@ function App() {
   const { view, canvasWidth, canvasHeight } = useGraphView(sidebarWidth, pixelScale, isResizingSidebar);
 
 function recompute(newEquations, activeId) {
-  definedFunctions.clear();
-  let activeGLSLCode = null;
-
+  const parsed = [];
   for (const eq of newEquations) {
     if (!eq.latex.trim()) continue;
     const result = parseLatexToGLSL(eq.latex);
     if (!result) continue;
-    definedFunctions.set(result.name, { paramNames: result.paramNames, body: result.function });
-    if (eq.id === activeId) activeGLSLCode = result.function;
+    parsed.push({ ...result, id: eq.id });
   }
 
-  console.log("all definedFunctions:", [...definedFunctions.entries()]);
+  const { order, cyclic, undefinedRefs } = topoSortFunctions(parsed);
+  if (cyclic.size > 0) console.warn("Skipping equations with a circular reference:", [...cyclic]);
+  if (undefinedRefs.size > 0) console.warn("Reference to undefined function(s):", [...undefinedRefs]);
+
+  definedFunctions.clear();
+  const byName = new Map(parsed.map(p => [p.name, p]));
+  let activeGLSLCode = null;
+
+  for (const name of order) {
+    const p = byName.get(name);
+    definedFunctions.set(name, { paramNames: p.paramNames, body: p.function });
+    if (p.id === activeId) activeGLSLCode = p.function;
+  }
+
   setActiveGLSL(activeGLSLCode);
 }
 

@@ -37,32 +37,23 @@ export function parseLatexToJS(latex) {
 }
 
 export function parseLatexToGLSL(latex) {
-    if (latex.includes("^{ }")) {
-        return null
-    }
+    if (latex.includes("^{ }")) return null;
     try {
-        latex = parseLatexParentheses(latex)
+        latex = parseLatexParentheses(latex);
         const varNames = getVariableNames(latex);
         const right = latex.split("=")[1].trim();
-
-        // empty function
-        if (right === "") {
-            return null;
-        }
+        if (right === "") return null;
 
         const mathJSExpression = parseLatexToMathJS(right);
         const paramNames = varNames.map(v => v.replaceAll("{", "").replaceAll("}", ""));
+        const deps = new Set();
+        const fn = nodeToGLSL(math.parse(mathJSExpression), deps);
 
-        return {
-            name: getFunctionName(latex),
-            function: nodeToGLSL(math.parse(mathJSExpression)),
-            paramNames
-        };
+        return { name: getFunctionName(latex), function: fn, paramNames, deps: [...deps] };
     } catch {
         return null;
     }
 }
-
 // Assumes parentheses already handled
 function parseLatexToMathJS(latex) {
     let parsed = replaceFractions(latex)
