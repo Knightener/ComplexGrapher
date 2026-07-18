@@ -2,7 +2,8 @@ import { useRef, useEffect } from "react";
 import { createProgram } from "./webglUtils";
 import { vertexShaderSource, buildFragmentShaderSource } from "./shaders";
 
-function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY, shaderVersion  }) {
+// list of equations to trigger an update
+function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY, equations  }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
   const programRef = useRef(null);
@@ -23,21 +24,33 @@ function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY, shaderV
     ]), gl.STATIC_DRAW);
   }, []);
 
-  useEffect(() => {
-    const gl = glRef.current;
-    if (!gl || !glslExpression) return;
+useEffect(() => {
+  const gl = glRef.current;
+  if (!gl) return;
 
-    const program = createProgram(gl, vertexShaderSource, buildFragmentShaderSource(glslExpression));
-    if (!program) return;
-    programRef.current = program;
-    gl.useProgram(program);
+  if (!glslExpression) {
+    programRef.current = null;
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    return;
+  }
 
-    const positionLoc = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+  const program = createProgram(gl, vertexShaderSource, buildFragmentShaderSource(glslExpression));
+  if (!program) {
+    programRef.current = null;
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    return;
+  }
+  programRef.current = program;
+  gl.useProgram(program);
 
-    draw.current();
-  }, [shaderVersion , glslExpression]);
+  const positionLoc = gl.getAttribLocation(program, "a_position");
+  gl.enableVertexAttribArray(positionLoc);
+  gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+  draw.current();
+}, [glslExpression, equations]);
 
   draw.current = () => {
     const gl = glRef.current;

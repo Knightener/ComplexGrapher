@@ -48,6 +48,7 @@ export function nodeToGLSL(node, deps = null) {
     if (node.fn.name === "sin") return `csin(${nodeToGLSL(node.args[0], deps)})`;
     if (node.fn.name === "cos") return `ccos(${nodeToGLSL(node.args[0], deps)})`;
 
+    // adding new function to dependencies list
     if (deps) deps.add(node.fn.name);
     const args = node.args.map(a => nodeToGLSL(a, deps)).join(", ");
     return `${node.fn.name}(${args})`;
@@ -59,6 +60,8 @@ export function nodeToGLSL(node, deps = null) {
   throw new Error(`unsupported node type: ${node.type}`);
 }
 
+// Takes a list of objects containing a name and dependencies and returns the topsort, the cyclic refs, invalid functions and undefined functions.
+// Invalid functions are those that depend on undefined functions. 
 export function topoSortFunctions(entries) {
   const names = new Set(entries.map(e => e.name));
   const byName = new Map(entries.map(e => [e.name, e]));

@@ -124,10 +124,10 @@ function recompute(newEquations, activeId) {
   width={canvasWidth}
   height={canvasHeight}
   glslExpression={activeGLSL}
+  equations={equations}
   zoom={view.zoom}
   offsetX={view.offset.x}
   offsetY={view.offset.y}
-  shaderVersion={version}
 />
       </div>
     </div>
