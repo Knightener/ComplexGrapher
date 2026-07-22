@@ -48,6 +48,10 @@ export function nodeToGLSL(node, deps = null, variables = []) {
     if (node.fn.name === "exp") return `cexp(${nodeToGLSL(node.args[0], deps, variables)})`;
     if (node.fn.name === "sin") return `csin(${nodeToGLSL(node.args[0], deps, variables)})`;
     if (node.fn.name === "cos") return `ccos(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "tan") return `ctan(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "cot") return `ccot(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "sec") return `csec(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "csc") return `ccsc(${nodeToGLSL(node.args[0], deps, variables)})`;
     if (node.fn.name === "mod") {
       if (node.args.length === 1) return `cmod(${nodeToGLSL(node.args[0], deps, variables)})`;
       if (node.args.length === 3) return `cmod(${nodeToGLSL(node.args[0], deps, variables)}, ${nodeToGLSL(node.args[1], deps, variables)}, ${nodeToGLSL(node.args[2], deps, variables)})`;
