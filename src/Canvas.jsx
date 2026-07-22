@@ -1,13 +1,25 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { createProgram } from "./webglUtils";
 import { vertexShaderSource, buildFragmentShaderSource } from "./shaders";
-
+import CursorNumber from "./CursorNumber";
 // list of equations to trigger an update
 function Canvas({ width, height, glslExpression, zoom, offsetX, offsetY, equations  }) {
   const canvasRef = useRef(null);
   const glRef = useRef(null);
   const programRef = useRef(null);
   const draw = useRef(() => { });
+  const [cursorZ, setCursorZ] = useState(null);
+
+  function handleMouseMove(e) {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (width / rect.width);
+    const py = (e.clientY - rect.top) * (height / rect.height);
+    const fragY = height - py; // canvas y grows down, gl_FragCoord.y grows up
+    const re = (px - width / 2 - offsetX) / zoom;
+    const im = (fragY - height / 2 - (-offsetY)) / zoom;
+    setCursorZ({ re, im });
+  }
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,7 +88,18 @@ useEffect(() => {
     draw.current();
   }, [zoom, offsetX, offsetY]);
 
-  return <canvas ref={canvasRef} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <canvas
+        ref={canvasRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setCursorZ(null)}
+        style={{ width: "100%", height: "100%" }}
+      />
+      <CursorNumber z={cursorZ} />
+    </div>
+  );
+
 }
 
 export default Canvas;

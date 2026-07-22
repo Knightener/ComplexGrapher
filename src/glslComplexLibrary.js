@@ -1,8 +1,6 @@
 
 // glsl
 export const glslComplexLibrary = `
-float sinh(float x) { return (exp(x) - exp(-x)) / 2.0; }
-float cosh(float x) { return (exp(x) + exp(-x)) / 2.0; }
 vec2 cmul(vec2 a, vec2 b) { return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x); }
 vec2 cdiv(vec2 a, vec2 b) {
   float d = b.x*b.x + b.y*b.y;
