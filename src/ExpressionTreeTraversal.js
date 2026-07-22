@@ -34,28 +34,33 @@ export function nodeToJS(node) {
   throw new Error(`unsupported node type: ${node.type}`);
 }
 
-export function nodeToGLSL(node, deps = null) {
+// Dependencies added to optional deps set during parsing
+export function nodeToGLSL(node, deps = null, variables = []) {
   if (node.type === "OperatorNode") {
-    if (node.op === "*") return `cmul(${nodeToGLSL(node.args[0], deps)}, ${nodeToGLSL(node.args[1], deps)})`;
-    if (node.op === "+") return `(${nodeToGLSL(node.args[0], deps)} + ${nodeToGLSL(node.args[1], deps)})`;
-    if (node.op === "-" && node.args.length === 2) return `(${nodeToGLSL(node.args[0], deps)} - ${nodeToGLSL(node.args[1], deps)})`;
-    if (node.op === "-" && node.args.length === 1) return `(-1.0 * ${nodeToGLSL(node.args[0], deps)})`;
-    if (node.op === "/") return `cdiv(${nodeToGLSL(node.args[0], deps)}, ${nodeToGLSL(node.args[1], deps)})`;
-    if (node.op === "^") return `cpow(${nodeToGLSL(node.args[0], deps)}, ${nodeToGLSL(node.args[1], deps)})`;
+    if (node.op === "*") return `cmul(${nodeToGLSL(node.args[0], deps, variables)}, ${nodeToGLSL(node.args[1], deps, variables)})`;
+    if (node.op === "+") return `(${nodeToGLSL(node.args[0], deps, variables)} + ${nodeToGLSL(node.args[1], deps, variables)})`;
+    if (node.op === "-" && node.args.length === 2) return `(${nodeToGLSL(node.args[0], deps, variables)} - ${nodeToGLSL(node.args[1], deps, variables)})`;
+    if (node.op === "-" && node.args.length === 1) return `(-1.0 * ${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.op === "/") return `cdiv(${nodeToGLSL(node.args[0], deps, variables)}, ${nodeToGLSL(node.args[1], deps, variables)})`;
+    if (node.op === "^") return `cpow(${nodeToGLSL(node.args[0], deps, variables)}, ${nodeToGLSL(node.args[1], deps, variables)})`;
   }
   if (node.type === "FunctionNode") {
-    if (node.fn.name === "exp") return `cexp(${nodeToGLSL(node.args[0], deps)})`;
-    if (node.fn.name === "sin") return `csin(${nodeToGLSL(node.args[0], deps)})`;
-    if (node.fn.name === "cos") return `ccos(${nodeToGLSL(node.args[0], deps)})`;
+    if (node.fn.name === "exp") return `cexp(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "sin") return `csin(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "cos") return `ccos(${nodeToGLSL(node.args[0], deps, variables)})`;
 
-    // adding new function to dependencies list
     if (deps) deps.add(node.fn.name);
-    const args = node.args.map(a => nodeToGLSL(a, deps)).join(", ");
+    const args = node.args.map(a => nodeToGLSL(a, deps, variables)).join(", ");
     return `${node.fn.name}(${args})`;
   }
-  if (node.type === "SymbolNode") return node.name;
-  if (node.type === "ConstantNode") return `vec2(${node.value.toFixed(8)}, 0.0)`;
-  if (node.type === "ParenthesisNode") return `(${nodeToGLSL(node.content, deps)})`;
+  if (node.type === "SymbolNode") {
+    if (deps && !variables.includes(node.name)) {
+      deps.add(node.name);
+    }
+    return node.name;
+  }
+  if (node.type === "ConstantNode") return `vec2(${glslFloat(node.value)}, 0.0)`;
+  if (node.type === "ParenthesisNode") return `(${nodeToGLSL(node.content, deps, variables)})`;
 
   throw new Error(`unsupported node type: ${node.type}`);
 }
@@ -92,11 +97,31 @@ export function topoSortFunctions(entries) {
 
 export function buildDefinedFunctionsGLSL() {
   let source = "";
+  let initSource = "";
   for (const [name, entry] of definedFunctions.entries()) {
-    console.log("entry:", name, entry);
     const { paramNames, body } = entry;
-    const params = paramNames.map(p => `vec2 ${p}`).join(", ");
-    source += `vec2 ${name}(${params}) {\n  return ${body};\n}\n\n`;
+    if (paramNames.length === 0) {
+      source += `vec2 ${name};\n`;
+      initSource += `  ${name} = ${body};\n`;
+    } else {
+      const params = paramNames.map(p => `vec2 ${p}`).join(", ");
+      source += `vec2 ${name}(${params}) {\n  return ${body};\n}\n\n`;
+    }
   }
+  source += `void initConstants() {\n${initSource}}\n\n`;
   return source;
+}
+
+export function buildDefinedConstantsGLSL() {
+  let source = "";
+  for (const [name, { re, im }] of definedConstants.entries()) {
+    source += `const vec2 ${name} = vec2(${re.toFixed(8)}, ${im.toFixed(8)});\n`;
+  }
+  return source + "\n";
+}
+
+// formats the float in a way that is compiled by glsl
+function glslFloat(n) {
+  let s = n.toString();
+  return s.includes(".") || s.includes("e") || s.includes("E") ? s : s + ".0";
 }

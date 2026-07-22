@@ -40,16 +40,28 @@ export function parseLatexToGLSL(latex) {
     if (latex.includes("^{ }")) return null;
     try {
         latex = parseLatexParentheses(latex);
-        const varNames = getVariableNames(latex);
-        const right = latex.split("=")[1].trim();
+        const eqIndex = latex.indexOf("=");
+        if (eqIndex === -1) return null;
+        const left = latex.slice(0, eqIndex);
+
+        let name, variables;
+        if (left.includes("(")) {
+            variables = getVariableNames(latex).map(v => v.replaceAll("{", "").replaceAll("}", ""));
+            name = getFunctionName(latex);
+        } else {
+            name = left.replaceAll("{", "").replaceAll("}", "").trim();
+            if (!name) return null;
+            variables = [];
+        }
+
+        const right = latex.slice(eqIndex + 1).trim();
         if (right === "") return null;
 
         const mathJSExpression = parseLatexToMathJS(right);
-        const paramNames = varNames.map(v => v.replaceAll("{", "").replaceAll("}", ""));
         const deps = new Set();
-        const fn = nodeToGLSL(math.parse(mathJSExpression), deps);
+        const fn = nodeToGLSL(math.parse(mathJSExpression), deps, variables);
 
-        return { name: getFunctionName(latex), function: fn, paramNames, deps: [...deps] };
+        return { name, function: fn, paramNames: variables, deps: [...deps] };
     } catch {
         return null;
     }

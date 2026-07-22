@@ -1,4 +1,4 @@
-import { buildDefinedFunctionsGLSL } from './ExpressionTreeTraversal';
+import { buildDefinedFunctionsGLSL, buildDefinedConstantsGLSL } from './ExpressionTreeTraversal';
 
 
 export const vertexShaderSource = `#version 300 es
@@ -46,6 +46,7 @@ export function buildFragmentShaderSource(expression) {
     ${buildDefinedFunctionsGLSL()}
 
     void main() {
+      initConstants();
       vec2 z = (gl_FragCoord.xy - u_resolution / 2.0 - u_offset) / u_zoom;
       vec2 result = ${expression};
 
