@@ -10,6 +10,9 @@ export const vertexShaderSource = `#version 300 es
 
 export function buildFragmentShaderSource(expression) {
   return `#version 300 es
+    #define PI 3.14159265358979323846
+    #define E  2.71828182845904523536
+
     precision highp float;
     uniform vec2 u_resolution;
     uniform float u_zoom;
@@ -26,6 +29,10 @@ export function buildFragmentShaderSource(expression) {
     vec2 cpow(vec2 a, vec2 b) { return cexp(cmul(b, cln(a))); }
     vec2 csin(vec2 z) { return vec2(sin(z.x)*cosh(z.y), cos(z.x)*sinh(z.y)); }
     vec2 ccos(vec2 z) { return vec2(cos(z.x)*cosh(z.y), -sin(z.x)*sinh(z.y)); }
+
+    vec2 i = vec2(0.0, 1.0);
+    vec2 pi = vec2(PI, 0.0);
+    vec2 e = vec2(E, 0.0);
 
     vec3 hsl2rgb(vec3 hsl) {
       float h = hsl.x, s = hsl.y, l = hsl.z;
