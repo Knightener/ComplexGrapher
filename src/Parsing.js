@@ -5,7 +5,7 @@ import { definedFunctions, nodeToGLSL, nodeToJS } from './ExpressionTreeTraversa
 
 const math = create(all);
 
-const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi"];
+const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi", "tau"];
 
 const SPECIAL_CHAR = '!'
 

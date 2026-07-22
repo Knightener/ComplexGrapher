@@ -32,6 +32,7 @@ export function buildFragmentShaderSource(expression) {
 
     vec2 i = vec2(0.0, 1.0);
     vec2 pi = vec2(PI, 0.0);
+    vec2 tau = vec2(2.0 * PI, 0.0);
     vec2 e = vec2(E, 0.0);
 
     vec3 hsl2rgb(vec3 hsl) {
@@ -65,7 +66,7 @@ export function buildFragmentShaderSource(expression) {
       }
 
       float theta = atan(result.y, result.x);
-      float hue = (theta + 3.14159265) / (2.0 * 3.14159265);
+      float hue = (theta + PI) / (2.0 * PI);
       float lightness = r / (r + 1.0);
       outColor = vec4(hsl2rgb(vec3(hue, 1.0, lightness)), 1.0);
     }

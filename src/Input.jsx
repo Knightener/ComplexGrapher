@@ -1,17 +1,21 @@
 import { useEffect, useRef } from "react";
 
-// Function input box
 export default function Input({ onChange }) {
     const containerRef = useRef(null);
     const mqField = useRef(null);
+    const onChangeRef = useRef(onChange);
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
 
     useEffect(() => {
         const MQ = window.MathQuill.getInterface(2);
         mqField.current = MQ.MathField(containerRef.current, {
-            autoCommands: "pi sqrt",
+            autoCommands: "pi theta sqrt",
             handlers: {
                 edit: () => {
-                    onChange(mqField.current.latex());
+                    onChangeRef.current(mqField.current.latex());
                 }
             }
         });
