@@ -5,7 +5,7 @@ import { definedFunctions, nodeToGLSL, nodeToJS } from './ExpressionTreeTraversa
 
 const math = create(all);
 
-const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi", "tau"];
+const SPECIAL = ["sin", "cos", "tan", "sqrt", "log", "exp", "abs", "pi", "tau", "mod"];
 
 const SPECIAL_CHAR = '!'
 
@@ -27,6 +27,7 @@ export function parseLatexToJS(latex) {
 
         const mathJSExpression = parseLatexToMathJS(right);
 
+        console.log(mathJSExpression)
         const generatedCode = nodeToJS(math.parse(mathJSExpression))
         const params = varNames.join(", ").replaceAll("{", "").replaceAll("}", "");
         const fn = new Function("Complex", "funcs", `return function(${params}) {return ${generatedCode};}`);
@@ -39,6 +40,8 @@ export function parseLatexToJS(latex) {
 export function parseLatexToGLSL(latex) {
     if (latex.includes("^{ }")) return null;
     try {
+        // Removes the operatornames
+        latex = latex.replaceAll(/\\operatorname\{(\w+)\}/g, "$1");
         latex = parseLatexParentheses(latex);
         const eqIndex = latex.indexOf("=");
         if (eqIndex === -1) return null;
@@ -58,6 +61,8 @@ export function parseLatexToGLSL(latex) {
         if (right === "") return null;
 
         const mathJSExpression = parseLatexToMathJS(right);
+
+        console.log(mathJSExpression)
         const deps = new Set();
         const fn = nodeToGLSL(math.parse(mathJSExpression), deps, variables);
 

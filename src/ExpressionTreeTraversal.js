@@ -48,6 +48,11 @@ export function nodeToGLSL(node, deps = null, variables = []) {
     if (node.fn.name === "exp") return `cexp(${nodeToGLSL(node.args[0], deps, variables)})`;
     if (node.fn.name === "sin") return `csin(${nodeToGLSL(node.args[0], deps, variables)})`;
     if (node.fn.name === "cos") return `ccos(${nodeToGLSL(node.args[0], deps, variables)})`;
+    if (node.fn.name === "mod") {
+      if (node.args.length === 1) return `cmod(${nodeToGLSL(node.args[0], deps, variables)})`;
+      if (node.args.length === 3) return `cmod(${nodeToGLSL(node.args[0], deps, variables)}, ${nodeToGLSL(node.args[1], deps, variables)}, ${nodeToGLSL(node.args[2], deps, variables)})`;
+      throw new Error(`mod: expected 1 or 2 arguments, got ${node.args.length}`);
+    }
 
     if (deps) deps.add(node.fn.name);
     const args = node.args.map(a => nodeToGLSL(a, deps, variables)).join(", ");
@@ -100,6 +105,7 @@ export function buildDefinedFunctionsGLSL() {
   let initSource = "";
   for (const [name, entry] of definedFunctions.entries()) {
     const { paramNames, body } = entry;
+    // Constant case. GLSL only allows global variable declarations to be constant expressions, so they have to be initiliazed later (in main). 
     if (paramNames.length === 0) {
       source += `vec2 ${name};\n`;
       initSource += `  ${name} = ${body};\n`;
@@ -109,6 +115,8 @@ export function buildDefinedFunctionsGLSL() {
     }
   }
   source += `void initConstants() {\n${initSource}}\n\n`;
+
+  console.log(source);
   return source;
 }
 

@@ -12,7 +12,8 @@ export default function Input({ onChange }) {
     useEffect(() => {
         const MQ = window.MathQuill.getInterface(2);
         mqField.current = MQ.MathField(containerRef.current, {
-            autoCommands: "pi theta sqrt",
+            autoCommands: "pi tau sqrt",
+            autoOperatorNames: "mod",
             handlers: {
                 edit: () => {
                     onChangeRef.current(mqField.current.latex());
